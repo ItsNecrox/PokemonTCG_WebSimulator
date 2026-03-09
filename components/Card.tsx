@@ -8,45 +8,60 @@ interface CardProps {
     card: PokemonCard
     style?: React.CSSProperties
     onClick?: () => void
-    showDetails?: boolean
+    revealMode?: boolean
 }
 
-function CardComponent({ card, style, onClick, showDetails = false }: CardProps) {
+function CardComponent({ card, style, onClick, revealMode = false }: CardProps) {
     const [isExpanded, setIsExpanded] = useState(false)
+    const [isFlipped, setIsFlipped] = useState(!revealMode)
     const holo = isHoloCard(card.rarity)
     const ultra = isUltraRare(card.rarity)
 
-    const handleClick = () => {
-        if (onClick) {
-            onClick()
+    const handleReveal = () => {
+        if (revealMode && !isFlipped) {
+            setIsFlipped(true)
+            if (onClick) onClick()
         } else {
             setIsExpanded(true)
         }
     }
 
+    const cardBackUrl = "https://images.pokemontcg.io/swsh11/back.png" // Standard back for SWSH era
+
     return (
         <>
             <div
-                className={`pokemon-card ${holo ? 'holo' : ''} ${ultra ? 'ultra-rare' : ''}`}
+                className={`card-container ${isFlipped ? 'is-flipped' : ''}`}
                 style={style}
-                onClick={handleClick}
+                onClick={handleReveal}
             >
-                <div className="pokemon-card-inner">
-                    <img
-                        src={card.images.small}
-                        alt={card.name}
-                        className="pokemon-card-image"
-                        loading="lazy"
-                    />
-                    <div className="pokemon-card-info">
-                        <div className="pokemon-card-name" title={card.name}>
-                            {card.name}
-                        </div>
-                        <div
-                            className="pokemon-card-rarity"
-                            style={{ color: getRarityColor(card.rarity) }}
-                        >
-                            {card.rarity || 'Common'}
+                <div className="card-inner-3d">
+                    {/* Back of the card */}
+                    <div className="card-back">
+                        <img src={cardBackUrl} alt="Pokemon Card Back" />
+                    </div>
+
+                    {/* Front of the card */}
+                    <div className={`card-front pokemon-card ${holo ? 'holo' : ''} ${ultra ? 'ultra-rare' : ''}`}>
+                        <div className="pokemon-card-inner" style={{ height: '100%', border: 'none' }}>
+                            <img
+                                src={card.images.small}
+                                alt={card.name}
+                                className="pokemon-card-image"
+                                loading="lazy"
+                            />
+                            {holo && <div className="holo-shine-overlay" />}
+                            <div className="pokemon-card-info">
+                                <div className="pokemon-card-name" title={card.name}>
+                                    {card.name}
+                                </div>
+                                <div
+                                    className="pokemon-card-rarity"
+                                    style={{ color: getRarityColor(card.rarity) }}
+                                >
+                                    {card.rarity || 'Common'}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

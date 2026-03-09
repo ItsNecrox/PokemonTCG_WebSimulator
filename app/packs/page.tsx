@@ -18,6 +18,8 @@ export default function PacksPage() {
     const [loading, setLoading] = useState(true)
     const [loadingSet, setLoadingSet] = useState(false)
     const [opening, setOpening] = useState(false)
+    const [isTearing, setIsTearing] = useState(false)
+    const [revealedCount, setRevealedCount] = useState(0)
     const [message, setMessage] = useState('')
     const [messageType, setMessageType] = useState<'normal' | 'success' | 'holo'>('normal')
 
@@ -74,70 +76,76 @@ export default function PacksPage() {
         if (setCards.length === 0) return
 
         setOpening(true)
-        setMessage('Abriendo sobre...')
+        setIsTearing(false)
+        setRevealedCount(0)
+        setPackCards([])
+        setMessage('Preparando sobre...')
         setMessageType('normal')
 
+        // Iniciar animación de rasgado después de un momento
         setTimeout(() => {
+            setIsTearing(true)
+            
+            // Simular las cartas y mostrarlas boca abajo
             const pack = simulatePack(setCards)
-            setPackCards(pack)
+            
+            setTimeout(() => {
+                setPackCards(pack)
+                setOpening(false)
+                setIsTearing(false)
+                setMessage('Toca las cartas para revelarlas')
+            }, 1200) // Duración de la animación de rasgado
+        }, 800)
+    }
 
-            // Guardar en colección
-            addCardsToCollection(pack)
+    const handleCardReveal = (card: PokemonCard) => {
+        setRevealedCount(prev => {
+            const newCount = prev + 1
+            if (newCount === packCards.length) {
+                // Todas reveladas, añadir a colección
+                addCardsToCollection(packCards)
+                window.dispatchEvent(new Event('collectionUpdated'))
+                
+                const ultraRare = packCards.find(c => isUltraRare(c.rarity))
+                const holo = packCards.find(c => isHoloCard(c.rarity))
 
-            // Notificar al navbar que se actualizó la colección
-            window.dispatchEvent(new Event('collectionUpdated'))
-
-            // Mensaje según las cartas obtenidas
-            const ultraRare = pack.find(c => isUltraRare(c.rarity))
-            const holo = pack.find(c => isHoloCard(c.rarity))
-
-            if (ultraRare) {
-                setMessage(`🌟 ¡ULTRA RARE! - ${ultraRare.name}`)
-                setMessageType('holo')
-            } else if (holo) {
-                setMessage(`✨ ¡Holo encontrada! - ${holo.name}`)
-                setMessageType('holo')
-            } else {
-                setMessage('Sobre abierto - Cartas añadidas a tu colección')
-                setMessageType('success')
+                if (ultraRare) {
+                    setMessage(`🌟 ¡INCREÍBLE! Has encontrado: ${ultraRare.name}`)
+                    setMessageType('holo')
+                } else if (holo) {
+                    setMessage(`✨ ¡Holo! - ${holo.name}`)
+                    setMessageType('holo')
+                } else {
+                    setMessage('¡Sobre completado! Cartas añadidas')
+                    setMessageType('success')
+                }
             }
-
-            setOpening(false)
-        }, 2500)
+            return newCount
+        })
     }
 
     if (loading) {
-        return (
-            <div className="page">
-                <div className="container text-center" style={{ paddingTop: '4rem' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎴</div>
-                    <p>Cargando expansiones...</p>
-                </div>
-            </div>
-        )
+        // ... loading state
     }
 
     return (
         <div className="page">
             {/* Opening Animation Overlay */}
             {opening && (
-                <div className="opening-overlay">
-                    <div className="particles">
-                        {[...Array(12)].map((_, i) => (
-                            <div
-                                key={i}
-                                className="particle"
-                                style={{
-                                    left: `${20 + Math.random() * 60}%`,
-                                    bottom: '30%',
-                                    animationDelay: `${Math.random() * 2}s`,
-                                    background: ['#ffcb05', '#ff5350', '#3b5ca8'][i % 3]
-                                }}
-                            />
-                        ))}
+                <div className="opening-overlay" style={{ background: 'rgba(0,0,0,0.85)' }}>
+                    <div className={`pack-wrapper ${isTearing ? 'is-tearing' : ''}`}>
+                        <div 
+                            className="pack-half pack-half-left" 
+                            style={{ backgroundImage: `url(${selectedSet?.images.logo})`, backgroundColor: '#ff5350' }} 
+                        />
+                        <div 
+                            className="pack-half pack-half-right" 
+                            style={{ backgroundImage: `url(${selectedSet?.images.logo})`, backgroundColor: '#3b5ca8' }} 
+                        />
                     </div>
-                    <div className="pack-visual" />
-                    <div className="opening-text">🗂️ Abriendo sobre...</div>
+                    <div className="opening-text" style={{ marginTop: '2rem' }}>
+                        {isTearing ? '¡Abriendo!' : 'Preparando...'}
+                    </div>
                 </div>
             )}
 
@@ -198,6 +206,8 @@ export default function PacksPage() {
                                 <Card
                                     key={`${card.id}-${index}`}
                                     card={card}
+                                    revealMode={true}
+                                    onClick={() => handleCardReveal(card)}
                                     style={{ animationDelay: `${index * 0.1}s` }}
                                 />
                             ))}

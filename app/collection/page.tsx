@@ -21,6 +21,7 @@ export default function CollectionPage() {
     const [sortMode, setSortMode] = useState<SortMode>('recent')
     const [selectedSet, setSelectedSet] = useState<string>('')
     const [selectedRarity, setSelectedRarity] = useState<string>('')
+    const [selectedType, setSelectedType] = useState<string>('')
     const [searchQuery, setSearchQuery] = useState('')
 
     useEffect(() => {
@@ -108,6 +109,11 @@ export default function CollectionPage() {
         // Filtrar por rareza
         if (selectedRarity) {
             result = result.filter(card => card.rarity === selectedRarity)
+        }
+
+        // Filtrar por tipo
+        if (selectedType) {
+            result = result.filter(card => card.types?.includes(selectedType))
         }
 
         // Ordenar
@@ -294,12 +300,33 @@ export default function CollectionPage() {
                                     background: 'var(--color-bg-secondary)',
                                     border: '1px solid rgba(255,255,255,0.1)',
                                     color: 'var(--color-text-primary)',
-                                    fontSize: '0.9rem'
+                                    fontSize: '0.9rem',
+                                    flex: '1 1 150px'
                                 }}
                             >
                                 <option value="">Todas las rarezas</option>
                                 {uniqueRarities.map(rarity => (
                                     <option key={rarity} value={rarity}>{rarity}</option>
+                                ))}
+                            </select>
+
+                            {/* Type Filter */}
+                            <select
+                                value={selectedType}
+                                onChange={(e) => setSelectedType(e.target.value)}
+                                style={{
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: 'var(--radius-md)',
+                                    background: 'var(--color-bg-secondary)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    color: 'var(--color-text-primary)',
+                                    fontSize: '0.9rem',
+                                    flex: '1 1 150px'
+                                }}
+                            >
+                                <option value="">Todos los tipos</option>
+                                {['Colorless', 'Darkness', 'Dragon', 'Fairy', 'Fighting', 'Fire', 'Grass', 'Lightning', 'Metal', 'Psychic', 'Water'].map(type => (
+                                    <option key={type} value={type}>{type}</option>
                                 ))}
                             </select>
 
